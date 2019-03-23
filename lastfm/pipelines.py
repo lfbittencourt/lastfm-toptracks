@@ -8,17 +8,24 @@
 import logging
 import pandas as pd
 
+
 class TrackPipeline(object):
     def open_spider(self, spider):
         self.items = []
 
     def close_spider(self, spider):
-        logging.info('Alright! Now we have %d track(s) to sort' % (len(self.items)))
+        logging.info('Alright! Now we have %d track(s) to sort' % (
+            len(self.items)
+        ))
 
         df = pd.DataFrame \
                .from_dict(self.items) \
-               .sort_values(by=['scrobbles_per_day', 'first_scrobble'], ascending=[False, True]) \
-               .groupby('artist', sort=False).agg({
+               .sort_values(
+                   by=['scrobbles_per_day', 'first_scrobble'],
+                   ascending=[False, True]
+               ) \
+               .groupby('artist', sort=False) \
+               .agg({
                    'title': 'first',
                    'first_scrobble': 'first',
                    'scrobbles_per_day': sum,
@@ -34,7 +41,7 @@ class TrackPipeline(object):
         for artist, row in df.iterrows():
             counter += 1
 
-            logging.info('%s) %s - %s' % (str(counter).zfill(2), artist, row['title']))
+            logging.info('%d) %s - %s' % (counter, artist, row['title']))
 
     def process_item(self, item, spider):
         self.items.append(item)
