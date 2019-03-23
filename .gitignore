@@ -1,2 +1,3 @@
+.cache-*
 lastfm/__pycache__/
 lastfm/spiders/__pycache__/

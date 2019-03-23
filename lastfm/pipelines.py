@@ -7,6 +7,8 @@
 
 import logging
 import pandas as pd
+import spotipy
+import spotipy.util as util
 
 
 class TrackPipeline(object):
@@ -36,12 +38,54 @@ class TrackPipeline(object):
 
         logging.info('Sorting is done! Here are the chosen tracks:')
 
-        counter = 0
+        scope = 'user-library-read playlist-modify-private'
+        token = util.prompt_for_user_token(
+            spider.spotify_username,
+            scope,
+            client_id=spider.spotify_client_id,
+            client_secret=spider.spotify_client_secret,
+            redirect_uri='http://foo/'
+        )
 
-        for artist, row in df.iterrows():
-            counter += 1
+        if token:
+            spotify = spotipy.Spotify(auth=token)
+            track_ids = []
 
-            logging.info('%d) %s - %s' % (counter, artist, row['title']))
+            for artist, row in df.iterrows():
+                logging.info('Searching for %s - %s on Spotify...' % (
+                    artist,
+                    row['title']
+                ))
+
+                query = 'artist:"%s" track:"%s"' % (artist, row['title'])
+                results = spotify.search(q=query, type='track')
+                track_id = results['tracks']['items'][0]['id']
+
+                logging.info('Found! ID is %s' % (track_id))
+                track_ids.append(track_id)
+
+            logging.info('Creating the playlist...')
+            results = spotify.user_playlist_create(
+                spider.spotify_username,
+                'Last.fm %s - %s' % (spider.date_from, spider.date_to),
+                public=False
+            )
+
+            playlist_id = results['id']
+            playlist_url = results['external_urls']['spotify']
+
+            logging.info('Created! ID is %s' % (playlist_id))
+            logging.info('Adding tracks to the playlist...')
+
+            results = spotify.user_playlist_add_tracks(
+                spider.spotify_username,
+                playlist_id,
+                track_ids
+            )
+
+            logging.info('All done! Now just push play: %s' % (playlist_url))
+        else:
+            logging.error("Can't get token for %s" % (spider.spotify_username))
 
     def process_item(self, item, spider):
         self.items.append(item)

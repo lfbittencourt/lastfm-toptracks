@@ -10,6 +10,9 @@ class ToptracksSpider(scrapy.Spider):
     name = 'toptracks'
     date_from = date(2018, 1, 1)
     date_to = date(2018, 12, 31)
+    spotify_username = 'foo'
+    spotify_client_id = 'foo'
+    spotify_client_secret = 'bar'
     start_urls = [
         'https://www.last.fm/user/Bittencourt'
         '/library/tracks?from=%s&to=%s' % (date_from, date_to),
