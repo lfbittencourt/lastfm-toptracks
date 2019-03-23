@@ -7,6 +7,7 @@
 
 import scrapy
 
+
 class Track(scrapy.Item):
     artist = scrapy.Field()
     title = scrapy.Field()
