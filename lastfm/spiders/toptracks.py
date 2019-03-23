@@ -97,7 +97,7 @@ class ToptracksSpider(scrapy.Spider):
             # Example: 12 Jan 8:51pm
             date = datetime.strptime(date_string, time_formats[1])
 
-        if (date.year == 1900):
+        if date.year == 1900:
             now = datetime.now()
             fixed_year = now.year
 

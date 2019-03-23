@@ -16,6 +16,10 @@ class TrackPipeline(object):
         self.items = []
 
     def close_spider(self, spider):
+        if len(self.items) == 0:
+            logging.warning('We have no items. Exiting...')
+            return
+
         logging.info('Alright! Now we have %d track(s) to sort' % (
             len(self.items)
         ))
@@ -59,10 +63,17 @@ class TrackPipeline(object):
 
                 query = 'artist:"%s" track:"%s"' % (artist, row['title'])
                 results = spotify.search(q=query, type='track')
+
+                if results['tracks']['total'] > 0:
                 track_id = results['tracks']['items'][0]['id']
 
                 logging.info('Found! ID is %s' % (track_id))
                 track_ids.append(track_id)
+                else:
+                    logging.warning('%s - %s was not found' % (
+                        artist,
+                        row['title']
+                    ))
 
             logging.info('Creating the playlist...')
             results = spotify.user_playlist_create(
