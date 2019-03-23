@@ -25,32 +25,34 @@ class ToptracksSpider(scrapy.Spider):
             logging.info('Crawling %s - %s...' % (item['artist'], item['title']))
 
             internal_url = track_row.xpath('td[7]/span/span/a/@href').get()
-            internal_url = re.sub(r'&?from=\d{4}-\d{2}-\d{2}&?', '', internal_url) # remove "from" QS
-            request = response.follow(internal_url, self.parse_internal)
+            internal_url = re.sub(r'&?from=\d{4}-\d{2}-\d{2}&?', '', internal_url) # remove "from" query string
+            request = response.follow(internal_url, self.get_last_scrobble)
 
             request.meta['item'] = item
 
             yield request
 
-    def parse_internal(self, response):
+    def get_last_scrobble(self, response):
         item = response.meta['item']
+        last_scrobble = response.css('.chartlist tbody tr:first-child td:last-child span::text').get()
+        last_scrobble = self.parse_date(last_scrobble)
 
-        if (item.get('last_scrobble') is None):
-            last_scrobble = response.css('.chartlist tbody tr:first-child td:last-child span::text').get()
-            last_scrobble = self.parse_date(last_scrobble)
+        item['last_scrobble'] = last_scrobble
 
-            item['last_scrobble'] = last_scrobble
-
+        # handle pagination
         last_page_link = response.css('ul.pagination-list a:last-child::attr(href)').get()
 
-        if '?page=' not in response.url and last_page_link is not None:
-            request = response.follow(last_page_link, self.parse_internal)
+        if last_page_link is not None:
+            request = response.follow(last_page_link, self.get_first_scrobble)
 
             request.meta['item'] = item
 
-            yield request
-            return
+            return request
 
+        return self.get_first_scrobble(response)
+
+    def get_first_scrobble(self, response):
+        item = response.meta['item']
         first_scrobble = response.css('.chartlist tbody tr:last-child td:last-child span::text').get()
         first_scrobble = self.parse_date(first_scrobble)
 
@@ -60,7 +62,7 @@ class ToptracksSpider(scrapy.Spider):
 
         item['scrobbles_per_day'] = item['scrobbles'] / delta.days
 
-        yield item
+        return item
 
     def parse_date(self, date_string):
         time_formats = ['%d %b %Y, %I:%M%p', '%d %b %I:%M%p']
