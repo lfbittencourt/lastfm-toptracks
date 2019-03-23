@@ -13,11 +13,11 @@ class TrackPipeline(object):
         self.items = []
 
     def close_spider(self, spider):
-        logging.info('Alright! Now we have %d tracks to sort' % (len(self.items)))
+        logging.info('Alright! Now we have %d track(s) to sort' % (len(self.items)))
 
         df = pd.DataFrame \
                .from_dict(self.items) \
-               .sort_values(by='scrobbles_per_day', ascending=False) \
+               .sort_values(by=['scrobbles_per_day', 'first_scrobble'], ascending=[False, True]) \
                .groupby('artist', sort=False).agg({
                    'title': 'first',
                    'first_scrobble': 'first',
