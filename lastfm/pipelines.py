@@ -61,7 +61,7 @@ class TrackPipeline(object):
                     row['title']
                 ))
 
-                query = 'artist:"%s" track:"%s"' % (artist, row['title'])
+                query = '"%s" artist:"%s"' % (row['title'], artist)
                 results = spotify.search(q=query, type='track')
 
                 if results['tracks']['total'] > 0:
