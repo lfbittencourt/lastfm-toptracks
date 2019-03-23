@@ -8,17 +8,32 @@ from lastfm.items import Track
 
 class ToptracksSpider(scrapy.Spider):
     name = 'toptracks'
-    date_from = date(2018, 1, 1)
-    date_to = date(2018, 12, 31)
-    spotify_username = 'foo'
+    year = date.today().year - 1
+    year_last_day = date.today()  # don't worry: it will be updated soon
+    lastfm_username = 'johndoe'
+    spotify_username = 'johndoe'
     spotify_client_id = 'foo'
     spotify_client_secret = 'bar'
-    start_urls = [
-        'https://www.last.fm/user/Bittencourt'
-        '/library/tracks?from=%s&to=%s' % (date_from, date_to),
-        'https://www.last.fm/user/Bittencourt'
-        '/library/tracks?from=%s&to=%s&page=2' % (date_from, date_to),
-    ]
+    playlist_length = 30
+
+    def start_requests(self):
+        start_urls = [
+            'https://www.last.fm/user/{0}/library/tracks'
+            '?from={1}-01-01&to={1}-12-31'.format(
+                self.lastfm_username,
+                self.year
+            ),
+            'https://www.last.fm/user/{0}/library/tracks'
+            '?from={1}-01-01&to={1}-12-31&page=2'.format(
+                self.lastfm_username,
+                self.year
+            ),
+        ]
+
+        year_last_day = date(int(self.year), 12, 31)
+
+        for url in start_urls:
+            yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
         for track_row in response.css('tr.js-link-block'):
@@ -81,7 +96,7 @@ class ToptracksSpider(scrapy.Spider):
 
         item['first_scrobble'] = first_scrobble
 
-        delta = self.date_to - item['first_scrobble'].date()
+        delta = self.year_last_day - item['first_scrobble'].date()
 
         item['scrobbles_per_day'] = item['scrobbles'] / delta.days
 

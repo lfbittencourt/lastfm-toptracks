@@ -37,7 +37,7 @@ class TrackPipeline(object):
                    'scrobbles_per_day': sum,
                }) \
                .sort_values(by='scrobbles_per_day', ascending=False) \
-               .head(30) \
+               .head(int(spider.playlist_length)) \
                .sort_values(by='first_scrobble')
 
         logging.info('Sorting is done! Here are the chosen tracks:')
@@ -65,10 +65,10 @@ class TrackPipeline(object):
                 results = spotify.search(q=query, type='track')
 
                 if results['tracks']['total'] > 0:
-                track_id = results['tracks']['items'][0]['id']
+                    track_id = results['tracks']['items'][0]['id']
 
-                logging.info('Found! ID is %s' % (track_id))
-                track_ids.append(track_id)
+                    logging.info('Found! ID is %s' % (track_id))
+                    track_ids.append(track_id)
                 else:
                     logging.warning('%s - %s was not found' % (
                         artist,
@@ -78,7 +78,7 @@ class TrackPipeline(object):
             logging.info('Creating the playlist...')
             results = spotify.user_playlist_create(
                 spider.spotify_username,
-                'Last.fm %s - %s' % (spider.date_from, spider.date_to),
+                'Last.fm %s' % (spider.year),
                 public=False
             )
 
